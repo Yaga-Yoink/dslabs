@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
+import java.util.HashMap;
 
 @ToString
 @EqualsAndHashCode
@@ -56,23 +57,27 @@ public class KVStore implements Application {
     @NonNull private final String value;
   }
 
-  // Your code here...
+  private final HashMap<String, String> KVData = new HashMap<>();
 
   @Override
   public KVStoreResult execute(Command command) {
-    if (command instanceof Get) {
-      Get g = (Get) command;
-      // Your code here...
+    if (command instanceof Get g) {
+      String value = KVData.get(g.key());
+      if (value == null) {
+        return new KeyNotFound();
+      }
+      return new GetResult(value);
     }
 
-    if (command instanceof Put) {
-      Put p = (Put) command;
-      // Your code here...
+    if (command instanceof Put p) {
+      KVData.put(p.key(), p.value());
+      return new PutOk();
     }
 
-    if (command instanceof Append) {
-      Append a = (Append) command;
-      // Your code here...
+    if (command instanceof Append a) {
+      String value = KVData.getOrDefault(a.key(), "").concat(a.value());
+      KVData.put(a.key(), value);
+      return new AppendResult(value);
     }
 
     throw new IllegalArgumentException();
