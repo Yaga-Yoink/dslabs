@@ -1,8 +1,10 @@
 package dslabs.atmostonce;
 
+import dslabs.framework.Address;
 import dslabs.framework.Application;
 import dslabs.framework.Command;
 import dslabs.framework.Result;
+import java.util.HashMap;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -15,18 +17,20 @@ import lombok.ToString;
 public final class AMOApplication<T extends Application> implements Application {
   @Getter @NonNull private final T application;
 
-  // Your code here...
+  private final HashMap<Address, AMOResult> results = new HashMap<>();
 
   @Override
   public AMOResult execute(Command command) {
-    if (!(command instanceof AMOCommand)) {
+    if (!(command instanceof AMOCommand amoCommand)) {
       throw new IllegalArgumentException();
     }
 
-    AMOCommand amoCommand = (AMOCommand) command;
-
-    // Your code here...
-    return null;
+    AMOResult lastResult = results.getOrDefault(amoCommand.sender(), new AMOResult(null, -1));
+    if (alreadyExecuted(amoCommand)) return lastResult;
+    Result result = application().execute(amoCommand.command());
+    AMOResult amoResult = new AMOResult(result, amoCommand.sequenceNum());
+    results.put(amoCommand.sender(), amoResult);
+    return amoResult;
   }
 
   public Result executeReadOnly(Command command) {
@@ -42,7 +46,7 @@ public final class AMOApplication<T extends Application> implements Application 
   }
 
   public boolean alreadyExecuted(AMOCommand amoCommand) {
-    // Your code here...
-    return false;
+    AMOResult lastResult = results.getOrDefault(amoCommand.sender(), new AMOResult(null, -1));
+    return amoCommand.sequenceNum() <= lastResult.sequenceNum();
   }
 }

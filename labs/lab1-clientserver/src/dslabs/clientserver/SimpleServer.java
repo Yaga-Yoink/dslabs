@@ -1,5 +1,7 @@
 package dslabs.clientserver;
 
+import dslabs.atmostonce.AMOApplication;
+import dslabs.atmostonce.AMOResult;
 import dslabs.framework.Address;
 import dslabs.framework.Application;
 import dslabs.framework.Node;
@@ -18,8 +20,7 @@ import java.util.HashMap;
 @EqualsAndHashCode(callSuper = true)
 class SimpleServer extends Node {
 
-  private final KVStore kvStore = new KVStore();
-  private final HashMap<Address, Reply> replyMap = new HashMap<>();
+  private final AMOApplication<KVStore> kvStore = new AMOApplication<>(new KVStore());
 
   /* -----------------------------------------------------------------------------------------------
    *  Construction and Initialization
@@ -37,15 +38,7 @@ class SimpleServer extends Node {
    *  Message Handlers
    * ---------------------------------------------------------------------------------------------*/
   private void handleRequest(Request m, Address sender) {
-    Reply lastReply = replyMap.getOrDefault(sender, new Reply(null, -1));
-    if (m.sequenceNum() < lastReply.sequenceNum()) {
-      return;
-    } else if (m.sequenceNum() == lastReply.sequenceNum()) {
-      this.send(lastReply, sender);
-      return;
-    }
-    KVStoreResult result = kvStore.execute(m.command());
-    this.send(new Reply(result, m.sequenceNum()), sender);
-    replyMap.put(sender, new Reply(result, m.sequenceNum()));
+    AMOResult result = kvStore.execute(m.command());
+    this.send(new Reply(result), sender);
   }
 }
