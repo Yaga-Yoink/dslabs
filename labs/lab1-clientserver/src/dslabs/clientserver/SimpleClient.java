@@ -71,6 +71,7 @@ class SimpleClient extends Node implements Client {
       return;
     }
     lastReply = m;
+    this.notify();
   }
 
   /* -----------------------------------------------------------------------------------------------
