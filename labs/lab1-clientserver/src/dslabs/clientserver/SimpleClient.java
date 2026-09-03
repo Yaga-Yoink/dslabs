@@ -5,6 +5,8 @@ import dslabs.framework.Client;
 import dslabs.framework.Command;
 import dslabs.framework.Node;
 import dslabs.framework.Result;
+import dslabs.clientserver.Request;
+import dslabs.clientserver.Reply;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -18,7 +20,9 @@ import lombok.ToString;
 class SimpleClient extends Node implements Client {
   private final Address serverAddress;
 
-  // Your code here...
+  // invariant: sequenceNum == -1 if no request or reply was processed
+  private Request lastRequest = new Request(null, -1);
+  private Reply lastReply = new Reply(null, -1);
 
   /* -----------------------------------------------------------------------------------------------
    *  Construction and Initialization
@@ -38,32 +42,42 @@ class SimpleClient extends Node implements Client {
    * ---------------------------------------------------------------------------------------------*/
   @Override
   public synchronized void sendCommand(Command command) {
-    // Your code here...
+    Request request = new Request(command, lastRequest.sequenceNum()+1);
+    this.send(request, serverAddress);
+    lastRequest = request;
+    this.set(new ClientTimer(), ClientTimer.CLIENT_RETRY_MILLIS);
   }
 
   @Override
   public synchronized boolean hasResult() {
-    // Your code here...
-    return false;
+    return lastRequest.sequenceNum() == lastReply.sequenceNum();
   }
 
   @Override
   public synchronized Result getResult() throws InterruptedException {
-    // Your code here...
-    return null;
+    while (!hasResult()) {
+      this.wait();
+    }
+    return lastReply.result();
   }
 
   /* -----------------------------------------------------------------------------------------------
    *  Message Handlers
    * ---------------------------------------------------------------------------------------------*/
   private synchronized void handleReply(Reply m, Address sender) {
-    // Your code here...
+    if (m.sequenceNum() <= lastReply.sequenceNum()) {
+      return;
+    }
+    lastReply = m;
   }
 
   /* -----------------------------------------------------------------------------------------------
    *  Timer Handlers
    * ---------------------------------------------------------------------------------------------*/
   private synchronized void onClientTimer(ClientTimer t) {
-    // Your code here...
+    if (!hasResult()) {
+      this.send(lastRequest, serverAddress);
+      this.set(new ClientTimer(), ClientTimer.CLIENT_RETRY_MILLIS);
+    }
   }
 }

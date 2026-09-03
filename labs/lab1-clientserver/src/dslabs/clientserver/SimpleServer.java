@@ -3,8 +3,11 @@ package dslabs.clientserver;
 import dslabs.framework.Address;
 import dslabs.framework.Application;
 import dslabs.framework.Node;
+import dslabs.kvstore.*;
+import dslabs.kvstore.KVStore.*;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import java.util.HashMap;
 
 /**
  * Simple server that receives requests and returns responses.
@@ -14,15 +17,15 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 class SimpleServer extends Node {
-  // Your code here...
+
+  private final KVStore kvStore = new KVStore();
+  private final HashMap<Address, Reply> replyMap = new HashMap<>();
 
   /* -----------------------------------------------------------------------------------------------
    *  Construction and Initialization
    * ---------------------------------------------------------------------------------------------*/
   public SimpleServer(Address address, Application app) {
     super(address);
-
-    // Your code here...
   }
 
   @Override
@@ -34,6 +37,15 @@ class SimpleServer extends Node {
    *  Message Handlers
    * ---------------------------------------------------------------------------------------------*/
   private void handleRequest(Request m, Address sender) {
-    // Your code here...
+    Reply lastReply = replyMap.getOrDefault(sender, new Reply(null, -1));
+    if (m.sequenceNum() < lastReply.sequenceNum()) {
+      return;
+    } else if (m.sequenceNum() == lastReply.sequenceNum()) {
+      this.send(lastReply, sender);
+      return;
+    }
+    KVStoreResult result = kvStore.execute(m.command());
+    this.send(new Reply(result, m.sequenceNum()), sender);
+    replyMap.put(sender, new Reply(result, m.sequenceNum()));
   }
 }
