@@ -47,7 +47,7 @@ class SimpleClient extends Node implements Client {
             new AMOCommand(command, this.address(), lastRequest.command().sequenceNum() + 1));
     this.send(request, serverAddress);
     lastRequest = request;
-    this.set(new ClientTimer(), ClientTimer.CLIENT_RETRY_MILLIS);
+    this.set(new ClientTimer(lastRequest.command().sequenceNum()), ClientTimer.CLIENT_RETRY_MILLIS);
   }
 
   @Override
@@ -78,9 +78,9 @@ class SimpleClient extends Node implements Client {
    *  Timer Handlers
    * ---------------------------------------------------------------------------------------------*/
   private synchronized void onClientTimer(ClientTimer t) {
-    if (!hasResult()) {
+    if (t.sequenceNum() == lastReply.result().sequenceNum()) {
       this.send(lastRequest, serverAddress);
-      this.set(new ClientTimer(), ClientTimer.CLIENT_RETRY_MILLIS);
+      this.set(new ClientTimer(t.sequenceNum()), ClientTimer.CLIENT_RETRY_MILLIS);
     }
   }
 }
