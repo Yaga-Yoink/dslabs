@@ -9,7 +9,6 @@ import dslabs.kvstore.*;
 import dslabs.kvstore.KVStore.*;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import java.util.HashMap;
 
 /**
  * Simple server that receives requests and returns responses.

@@ -3,11 +3,11 @@ package dslabs.kvstore;
 import dslabs.framework.Application;
 import dslabs.framework.Command;
 import dslabs.framework.Result;
+import java.util.HashMap;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-import java.util.HashMap;
 
 @ToString
 @EqualsAndHashCode

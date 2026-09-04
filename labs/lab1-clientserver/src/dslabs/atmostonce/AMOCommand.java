@@ -1,7 +1,7 @@
 package dslabs.atmostonce;
 
-import dslabs.framework.Command;
 import dslabs.framework.Address;
+import dslabs.framework.Command;
 import lombok.Data;
 
 @Data

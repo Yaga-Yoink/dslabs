@@ -7,8 +7,6 @@ import dslabs.framework.Client;
 import dslabs.framework.Command;
 import dslabs.framework.Node;
 import dslabs.framework.Result;
-import dslabs.clientserver.Request;
-import dslabs.clientserver.Reply;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -44,7 +42,9 @@ class SimpleClient extends Node implements Client {
    * ---------------------------------------------------------------------------------------------*/
   @Override
   public synchronized void sendCommand(Command command) {
-    Request request = new Request(new AMOCommand(command, this.address(), lastRequest.command().sequenceNum()+1));
+    Request request =
+        new Request(
+            new AMOCommand(command, this.address(), lastRequest.command().sequenceNum() + 1));
     this.send(request, serverAddress);
     lastRequest = request;
     this.set(new ClientTimer(), ClientTimer.CLIENT_RETRY_MILLIS);
